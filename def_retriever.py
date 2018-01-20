@@ -9,15 +9,26 @@ import sys
 
 save_flag = 0
 path = "/home/aburak/"
+n_args = len(sys.argv)
+
+# usage of def
+if n_args == 1:
+    print('Usage of def:\ndef <word> <save_flag>')
+    print('<word>: the word to get the definition. It can be more than one word')
+    print('<save_flag>: 1 to save the word to words.txt. Default is 0.')
+    sys.exit()
 
 # check the number of arguments
 if len(sys.argv) < 2 and len(sys.argv) > 3:
     sys.exit('Wrong number of arguments!')
 
 # check if the call involves parameter stating "save"
-if len(sys.argv) == 3:
-    save_flag = 1
-    
+sf = 0 # to indicate if save flag is given
+if str.isdigit(sys.argv[n_args-1]) == True:
+    save_flag = int(sys.argv[n_args-1])
+    sf = 1
+else:
+    save_flag = 0
 
 # variables
 word_id = sys.argv[1] # word to look up the definition in dictionary
@@ -26,8 +37,11 @@ app_key = '' # app key of Oxford Dictionary
 base_url = 'https://od-api.oxforddictionaries.com/api/v1/'
 source_lang = 'en' # language choice
 
+# construct the word to get the definition
+for i in xrange(2,n_args-sf):
+    word_id = word_id + ' ' + sys.argv[i]
 
-url = base_url + 'entries/' + source_lang + '/' +  word_id.lower() 
+url = base_url + 'entries/' + source_lang + '/' +  word_id.lower()
 r = requests.get(url, headers={'app_id': app_id, 'app_key': app_key})
 
 # check the response
@@ -56,11 +70,7 @@ try:
         with open( path + "words.txt", "a") as myfile:
             myfile.write(word_id + "\t")
             myfile.write(definition + "\n")
-    
+
     print "Word:\n" + word_id + "\nDefinition:\n" + nl_def
 except:
     print sys.exc_info()[0]
-
-
-
-

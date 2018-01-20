@@ -1,0 +1,1 @@
+sudo cp def_retriever.py /usr/local/bin/def
