@@ -7,7 +7,6 @@ import requests
 import json
 import sys
 
-save_flag = 0
 path = "/home/aburak/"
 n_args = len(sys.argv)
 
@@ -27,8 +26,6 @@ sf = 0 # to indicate if save flag is given
 if str.isdigit(sys.argv[n_args-1]) == True:
     save_flag = int(sys.argv[n_args-1])
     sf = 1
-else:
-    save_flag = 0
 
 # variables
 word_id = sys.argv[1] # word to look up the definition in dictionary
@@ -66,6 +63,11 @@ try:
     for i in xrange(len(t)):
 	definition +=  str(i+1) + ". " + t[i]['definitions'][0] + '\t'
 	nl_def += str(i+1) + ". " + t[i]['definitions'][0] + '\n'
+    if sf == 0:
+        print("Do you want to save the word? (y to save / anything to skip)")
+        tmp = raw_input()
+        if tmp == 'y':
+            save_flag = 1
     if save_flag == 1:
         with open( path + "words.txt", "a") as myfile:
             myfile.write(word_id + "\t")
