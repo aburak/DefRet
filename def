@@ -6,8 +6,11 @@
 import requests
 import json
 import sys
+from sets import Set
+from os.path import expanduser
 
-path = "/home/aburak/"
+home = expanduser("~")
+path = home + "/.def/"
 n_args = len(sys.argv)
 
 # usage of def
@@ -29,8 +32,8 @@ if str.isdigit(sys.argv[n_args-1]) == True:
 
 # variables
 word_id = sys.argv[1] # word to look up the definition in dictionary
-app_id = '' # app id of Oxford Dictionary
-app_key = '' # app key of Oxford Dictionary
+app_id = '756ccf57' # app id of Oxford Dictionary
+app_key = '96fb003eb6bd36c36a78cbb54297fb22' # app key of Oxford Dictionary
 base_url = 'https://od-api.oxforddictionaries.com/api/v1/'
 source_lang = 'en' # language choice
 
@@ -38,41 +41,63 @@ source_lang = 'en' # language choice
 for i in xrange(2,n_args-sf):
     word_id = word_id + ' ' + sys.argv[i]
 
-url = base_url + 'entries/' + source_lang + '/' +  word_id.lower()
-r = requests.get(url, headers={'app_id': app_id, 'app_key': app_key})
 
-# check the response
-if r.status_code == 404:
-    print 'Word ' + word_id + ' is not found!'
-    sys.exit(0)
+# read all previous words to check if the new word is already in the list
+w_dict = {}
+f = open( path + "words.txt", "r")
+for line in f:
+    tmp = line.rstrip().split("\t")
+    tmp_def = ''
+    for i in range(1,len(tmp)):
+	tmp_def += tmp[i] + '\n'
+    w_dict[tmp[0].strip()] = tmp_def
 
-if r.status_code == 500:
-    print 'Internal Error: An error occured while processing data'
-    sys.exit(0)
+in_the_list_flag = (word_id in w_dict)
+if in_the_list_flag == False:
+    url = base_url + 'entries/' + source_lang + '/' +  word_id.lower()
+    r = requests.get(url, headers={'app_id': app_id, 'app_key': app_key})
 
-if r.status_code != 200:
-    print 'Unknown error!'
-    sys.exit(0)
+    # check the response
+    if r.status_code == 404:
+        print("Word " + word_id + " is not found!")
+        sys.exit(0)
 
+    if r.status_code == 500:
+        print("Internal Error: An error occured while processing data")
+        sys.exit(0)
 
-try:
-    j_data = json.loads(json.dumps(r.json()))
-    t = j_data['results'][0]['lexicalEntries'][0]['entries'][0]['senses']
-    definition = ''
-    nl_def = ''
-    for i in xrange(len(t)):
-	definition +=  str(i+1) + ". " + t[i]['definitions'][0] + '\t'
-	nl_def += str(i+1) + ". " + t[i]['definitions'][0] + '\n'
-    if sf == 0:
-        print("Do you want to save the word? (y to save / anything to skip)")
-        tmp = raw_input()
-        if tmp == 'y':
-            save_flag = 1
-    if save_flag == 1:
-        with open( path + "words.txt", "a") as myfile:
-            myfile.write(word_id + "\t")
-            myfile.write(definition + "\n")
+    if r.status_code != 200:
+        print("Unknown error!")
+        sys.exit(0)
 
-    print "Word:\n" + word_id + "\nDefinition:\n" + nl_def
-except:
-    print sys.exc_info()[0]
+    try:
+	print("CP1")
+        j_data = json.loads(json.dumps(r.json()))
+	print(j_data)
+        t = j_data['results'][0]['lexicalEntries'][0]['entries'][0]['senses']
+	print("t: ", t)
+        definition = ''
+        nl_def = ''
+        for i in xrange(len(t)):
+	    definition +=  str(i+1) + ". " + t[i]['definitions'][0] + '\t'
+	    nl_def += str(i+1) + ". " + t[i]['definitions'][0] + '\n'
+    except:
+        print("Line 82: ", sys.exc_info()[0])
+else:
+    print("--already in the list--")
+    nl_def = w_dict[word_id]
+
+print("Word:\n" + word_id + "\nDefinition:\n" + nl_def)
+
+if in_the_list_flag == False:
+	if sf == 0:
+	    print("Do you want to save the word? (y to save / anything to skip)")
+	    tmp = raw_input()
+	    if tmp == 'y':
+		save_flag = 1
+	    else:
+		save_flag = 0
+	if save_flag == 1:
+	    with open( path + "words.txt", "a") as myfile:
+		myfile.write(word_id + "\t")
+		myfile.write(definition + "\n")
